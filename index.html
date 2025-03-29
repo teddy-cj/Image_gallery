@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Image Gallery</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .gallery-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+
+        .gallery-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .upload-section {
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-title {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .file-input-container {
+            position: relative;
+        }
+
+        .file-input {
+            opacity: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 15px;
+            background-color: #e0e0e0;
+            border: 2px dashed #3498db;
+            border-radius: 4px;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            height: 100px;
+        }
+
+        .file-input-label:hover {
+            background-color: #d0d0d0;
+        }
+
+        .file-name {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .caption-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .upload-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            align-self: flex-start;
+        }
+
+        .upload-button:hover {
+            background-color: #2980b9;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 200px;
+            margin-top: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .main-image-container {
+            width: 100%;
+            max-width: 800px;
+            height: 500px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .main-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .main-image:hover {
+            transform: scale(1.02);
+        }
+
+        .caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .main-image-container:hover .caption {
+            transform: translateY(0);
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+
+        .nav-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-button:hover {
+            background-color: #2980b9;
+        }
+
+        .nav-button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .thumbnails {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .thumbnail {
+            width: 120px;
+            height: 80px;
+            object-fit: cover;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+
+        .thumbnail:hover {
+            transform: scale(1.05);
+        }
+
+        .thumbnail.active {
+            border-color: #3498db;
+        }
+
+        .thumbnail-container {
+            position: relative;
+        }
+
+        .delete-button {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 24px;
+            height: 24px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .thumbnail-container:hover .delete-button {
+            opacity: 1;
+        }
+
+        .lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .lightbox-image {
+            max-width: 100%;
+            max-height: 90vh;
+            border-radius: 4px;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        .counter {
+            color: white;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        .empty-gallery {
+            width: 100%;
+            max-width: 800px;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            color: #888;
+            font-size: 18px;
+            text-align: center;
+            padding: 20px;
+            border: 2px dashed #ccc;
+        }
+
+        @media (max-width: 768px) {
+            .main-image-container {
+                height: 350px;
+            }
+            
+            .thumbnail {
+                width: 80px;
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="gallery-title">Image Gallery</h1>
+        
+        <div class="gallery-container">
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <h2 class="upload-title">Add Your Image</h2>
+                <div class="upload-form">
+                    <div class="file-input-container">
+                        <div class="file-input-label" id="drop-area">
+                            <span>Click or drag image here to upload</span>
+                        </div>
+                        <input type="file" id="file-input" class="file-input" accept="image/*">
+                        <div class="file-name" id="file-name"></div>
+                        <img id="preview-image" class="preview-image">
+                    </div>
+                    <input type="text" class="caption-input" id="caption-input" placeholder="Enter image caption">
+                    <button class="upload-button" id="upload-button">Add to Gallery</button>
+                </div>
+            </div>
+            
+            <!-- Image display section -->
+            <div id="gallery-display">
+                <div class="empty-gallery" id="empty-gallery">
+                    <p>Your gallery is empty. Add images above to get started.</p>
+                </div>
+                
+                <div class="main-image-container" id="main-image-container" style="display: none;">
+                    <img src="/api/placeholder/800/500" alt="Gallery Image" class="main-image" id="main-image">
+                    <div class="caption" id="caption">Beautiful Landscape</div>
+                </div>
+                
+                <div class="navigation" id="navigation" style="display: none;">
+                    <button class="nav-button" id="prev-btn">Previous</button>
+                    <button class="nav-button" id="next-btn">Next</button>
+                </div>
+                
+                <div class="thumbnails" id="thumbnails">
+                    <!-- Thumbnails will be inserted here by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="lightbox" id="lightbox">
+        <div class="lightbox-content">
+            <span class="lightbox-close" id="lightbox-close">&times;</span>
+            <img src="/api/placeholder/800/500" alt="Lightbox Image" class="lightbox-image" id="lightbox-image">
+            <div class="counter" id="lightbox-counter">Image 1 of 6</div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const fileInput = document.getElementById('file-input');
+            const dropArea = document.getElementById('drop-area');
+            const fileName = document.getElementById('file-name');
+            const previewImage = document.getElementById('preview-image');
+            const captionInput = document.getElementById('caption-input');
+            const uploadButton = document.getElementById('upload-button');
+            const mainImageContainer = document.getElementById('main-image-container');
+            const emptyGallery = document.getElementById('empty-gallery');
+            const navigation = document.getElementById('navigation');
+            const mainImage = document.getElementById('main-image');
+            const caption = document.getElementById('caption');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const thumbnailsContainer = document.getElementById('thumbnails');
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImage = document.getElementById('lightbox-image');
+            const lightboxClose = document.getElementById('lightbox-close');
+            const lightboxCounter = document.getElementById('lightbox-counter');
+            
+            // Gallery data
+            let galleryImages = [];
+            let currentIndex = 0;
+            
+            // Check if local storage has saved images
+            const savedGallery = localStorage.getItem('userGallery');
+            if (savedGallery) {
+                galleryImages = JSON.parse(savedGallery);
+                if (galleryImages.length > 0) {
+                    showGallery();
+                    initGallery();
+                }
+            }
+            
+            // Handle file selection
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // Handle drag and drop
+            dropArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                dropArea.style.backgroundColor = '#d0d0d0';
+            });
+            
+            dropArea.addEventListener('dragleave', function() {
+                dropArea.style.backgroundColor = '#e0e0e0';
+            });
+            
+            dropArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                dropArea.style.backgroundColor = '#e0e0e0';
+                
+                if (e.dataTransfer.files.length) {
+                    handleFiles(e.dataTransfer.files[0]);
+                }
+            });
+            
+            // Click to select file
+            dropArea.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            // Upload button
+            uploadButton.addEventListener('click', addImageToGallery);
+            
+            // File handling functions
+            function handleFileSelect(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    handleFiles(file);
+                }
+            }
+            
+            function handleFiles(file) {
+                if (!file.type.match('image.*')) {
+                    alert('Please select an image file');
+                    return;
+                }
+                
+                fileName.textContent = file.name;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewImage.style.display = 'block';
+                };
+                
+                reader.readAsDataURL(file);
+            }
+            
+            // Add image to gallery
+            function addImageToGallery() {
+                if (!previewImage.src || previewImage.src === '') {
+                    alert('Please select an image first');
+                    return;
+                }
+                
+                const newImage = {
+                    src: previewImage.src,
+                    thumbnail: previewImage.src,
+                    caption: captionInput.value || 'My Image'
+                };
+                
+                galleryImages.push(newImage);
+                
+                // Save to local storage
+                localStorage.setItem('userGallery', JSON.stringify(galleryImages));
+                
+                // Reset form
+                fileInput.value = '';
+                fileName.textContent = '';
+                previewImage.src = '';
+                previewImage.style.display = 'none';
+                captionInput.value = '';
+                
+                // Show gallery if this is the first image
+                if (galleryImages.length === 1) {
+                    showGallery();
+                }
+                
+                // Update gallery
+                updateGallery();
+            }
+            
+            // Show gallery elements and hide empty state
+            function showGallery() {
+                emptyGallery.style.display = 'none';
+                mainImageContainer.style.display = 'block';
+                navigation.style.display = 'flex';
+            }
+            
+            // Initialize gallery
+            function initGallery() {
+                // Load initial image
+                updateMainImage();
+                
+                // Create thumbnails
+                updateThumbnails();
+                
+                // Update button states
+                updateButtons();
+            }
+            
+            // Update gallery after adding new image
+            function updateGallery() {
+                // Set current index to the last image
+                currentIndex = galleryImages.length - 1;
+                
+                // Update main image and thumbnails
+                updateMainImage();
+                updateThumbnails();
+                updateButtons();
+            }
+            
+            // Update main image and caption
+            function updateMainImage() {
+                if (galleryImages.length > 0) {
+                    mainImage.src = galleryImages[currentIndex].src;
+                    caption.textContent = galleryImages[currentIndex].caption;
+                }
+            }
+            
+            // Update thumbnails
+            function updateThumbnails() {
+                // Clear existing thumbnails
+                thumbnailsContainer.innerHTML = '';
+                
+                galleryImages.forEach((image, index) => {
+                    const thumbnailContainer = document.createElement('div');
+                    thumbnailContainer.classList.add('thumbnail-container');
+                    
+                    const thumbnail = document.createElement('img');
+                    thumbnail.src = image.thumbnail;
+                    thumbnail.alt = `Thumbnail ${index + 1}`;
+                    thumbnail.classList.add('thumbnail');
+                    if (index === currentIndex) {
+                        thumbnail.classList.add('active');
+                    }
+                    
+                    const deleteButton = document.createElement('button');
+                    deleteButton.classList.add('delete-button');
+                    deleteButton.innerHTML = '×';
+                    
+                    thumbnail.addEventListener('click', () => {
+                        currentIndex = index;
+                        updateMainImage();
+                        updateThumbnails();
+                        updateButtons();
+                    });
+                    
+                    deleteButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        deleteImage(index);
+                    });
+                    
+                    thumbnailContainer.appendChild(thumbnail);
+                    thumbnailContainer.appendChild(deleteButton);
+                    thumbnailsContainer.appendChild(thumbnailContainer);
+                });
+            }
+            
+            // Delete image from gallery
+            function deleteImage(index) {
+                galleryImages.splice(index, 1);
+                
+                // Save to local storage
+                localStorage.setItem('userGallery', JSON.stringify(galleryImages));
+                
+                // If gallery is empty, show empty state
+                if (galleryImages.length === 0) {
+                    emptyGallery.style.display = 'flex';
+                    mainImageContainer.style.display = 'none';
+                    navigation.style.display = 'none';
+                    return;
+                }
+                
+                // Adjust current index if needed
+                if (index <= currentIndex) {
+                    currentIndex = Math.max(0, currentIndex - 1);
+                }
+                
+                // Update gallery
+                updateMainImage();
+                updateThumbnails();
+                updateButtons();
+            }
+            
+            // Update navigation buttons state
+            function updateButtons() {
+                prevBtn.disabled = currentIndex === 0 || galleryImages.length === 0;
+                nextBtn.disabled = currentIndex === galleryImages.length - 1 || galleryImages.length === 0;
+            }
+            
+            // Event listeners for navigation buttons
+            prevBtn.addEventListener('click', () => {
+                if (currentIndex > 0) {
+                    currentIndex--;
+                    updateMainImage();
+                    updateThumbnails();
+                    updateButtons();
+                }
+            });
+            
+            nextBtn.addEventListener('click', () => {
+                if (currentIndex < galleryImages.length - 1) {
+                    currentIndex++;
+                    updateMainImage();
+                    updateThumbnails();
+                    updateButtons();
+                }
+            });
+            
+            // Lightbox functionality
+            mainImage.addEventListener('click', () => {
+                if (galleryImages.length > 0) {
+                    lightboxImage.src = galleryImages[currentIndex].src;
+                    lightboxCounter.textContent = `Image ${currentIndex + 1} of ${galleryImages.length}`;
+                    lightbox.style.display = 'flex';
+                }
+            });
+            
+            lightboxClose.addEventListener('click', () => {
+                lightbox.style.display = 'none';
+            });
+            
+            // Close lightbox when clicking outside the image
+            lightbox.addEventListener('click', (e) => {
+                if (e.target === lightbox) {
+                    lightbox.style.display = 'none';
+                }
+            });
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (lightbox.style.display === 'flex') {
+                    if (e.key === 'Escape') {
+                        lightbox.style.display = 'none';
+                    } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                        currentIndex--;
+                        updateMainImage();
+                        updateThumbnails();
+                        updateButtons();
+                        lightboxImage.src = galleryImages[currentIndex].src;
+                        lightboxCounter.textContent = `Image ${currentIndex + 1} of ${galleryImages.length}`;
+                    } else if (e.key === 'ArrowRight' && currentIndex < galleryImages.length - 1) {
+                        currentIndex++;
+                        updateMainImage();
+                        updateThumbnails();
+                        updateButtons();
+                        lightboxImage.src = galleryImages[currentIndex].src;
+                        lightboxCounter.textContent = `Image ${currentIndex + 1} of ${galleryImages.length}`;
+                    }
+                } else {
+                    if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                        currentIndex--;
+                        updateMainImage();
+                        updateThumbnails();
+                        updateButtons();
+                    } else if (e.key === 'ArrowRight' && currentIndex < galleryImages.length - 1) {
+                        currentIndex++;
+                        updateMainImage();
+                        updateThumbnails();
+                        updateButtons();
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
